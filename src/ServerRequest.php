@@ -159,4 +159,32 @@ final class ServerRequest implements ServerRequestInterface
 
         return $new;
     }
+
+    public function __serialize(): array
+    {
+        return [
+            'method'        => serialize($this->getMethod()),
+            'uri'           => serialize($this->getUri()),
+            'headers'       => serialize($this->getHeaders()),
+            'body'          => serialize($this->getBody()->getContents()),
+            'version'       => serialize($this->getProtocolVersion()),
+            'server_params' => serialize($this->getServerParams())
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->method = unserialize($data['method'], ['allowed_classes' => true]);
+        $this->uri = unserialize($data['uri'], ['allowed_classes' => true]);
+        $this->headers = unserialize($data['headers'], ['allowed_classes' => true]);
+
+        $this->protocol = unserialize($data['version'], ['allowed_classes' => true]);
+        $this->serverParams = unserialize($data['server_params'], ['allowed_classes' => true]);
+
+        $body = unserialize($data['body'], ['allowed_classes' => true]);
+
+        if ('' !== $body && null !== $body) {
+            $this->stream = Stream::create($body);
+        }
+    }
 }
